@@ -32,6 +32,7 @@ body{margin:0;background:var(--ground);color:var(--ink);font:15px/1.55 var(--san
 .chip.waiting{background:var(--warn-soft);color:var(--warn)}
 .chip.done{background:var(--ok-soft);color:var(--ok)}
 .chip.failed{background:var(--bad-soft);color:var(--bad)}
+.chip.stalled{background:var(--track);color:var(--muted)}
 .heartbeat.stale{color:var(--warn);font-weight:500}
 h1{margin:10px 0 0;font-size:clamp(22px,4.4vw,28px);line-height:1.25;font-weight:600;letter-spacing:-.005em;text-wrap:balance}
 .activity{margin:6px 0 0;color:var(--muted);font-size:15px}
@@ -52,6 +53,7 @@ h1{margin:10px 0 0;font-size:clamp(22px,4.4vw,28px);line-height:1.25;font-weight
 .seg.done>i{background:var(--ok)}
 .seg.failed>i{background:var(--bad)}
 .seg.running>i{background-image:repeating-linear-gradient(-45deg,transparent 0 5px,rgba(255,255,255,.25) 5px 10px);background-size:14.14px 14.14px;animation:slide 1s linear infinite}
+.bar.paused .seg>i{animation:none}
 .bar-note{grid-column:1/-1;margin:-8px 0 0;font-size:12px;color:var(--muted)}
 h2{margin:0 0 10px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
 .steps{list-style:none;margin:0;padding:0;background:var(--surface);border:1px solid var(--line);border-radius:10px}
@@ -204,10 +206,10 @@ h2{margin:0 0 10px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;
   "use strict";
   var I18N = {
     zh: {
-      title:"任务进度", connecting:"正在连接……", wait:"等待数据", running:"进行中", waiting:"等你回复", done:"已完成", failed:"已中断",
+      title:"任务进度", connecting:"正在连接……", wait:"等待数据", running:"进行中", waiting:"等你回复", done:"已完成", failed:"已中断", stalled:"可能已停止",
       remaining:"预计剩余", paused:"已暂停", total:"总用时", stopped:"状态",
       finishAt:function(t){return "预计 "+t+" 完成";}, finishedAt:function(t){return "完成于 "+t;},
-      resume:function(r){return "回复后继续，之后约需 "+r;}, soon:"即将完成",
+      resume:function(r){return "回复后继续，之后约需 "+r;}, soon:"即将完成", lastUpdate:function(t){return "最后一次更新在 "+t;},
       elapsed:"已用时", progress:"完成度", pace:"节奏", conf:"估算可信度",
       confRough:"粗略", confFair:"一般", confGood:"较准", paceNone:"暂无",
       paceTip:"已完成步骤的实际耗时 ÷ 预估耗时，大于 1 表示比预想的慢",
@@ -225,10 +227,10 @@ h2{margin:0 0 10px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;
       min:"分钟", minShort:"分", hr:"小时", lt1:"<1", locale:"zh-CN"
     },
     en: {
-      title:"Task progress", connecting:"Connecting…", wait:"Waiting for data", running:"Running", waiting:"Needs your reply", done:"Done", failed:"Stopped",
+      title:"Task progress", connecting:"Connecting…", wait:"Waiting for data", running:"Running", waiting:"Needs your reply", done:"Done", failed:"Stopped", stalled:"May have stopped",
       remaining:"Time left", paused:"Paused", total:"Total time", stopped:"Status",
       finishAt:function(t){return "Expected to finish at "+t;}, finishedAt:function(t){return "Finished at "+t;},
-      resume:function(r){return "Resumes after your reply, then about "+r;}, soon:"Almost done",
+      resume:function(r){return "Resumes after your reply, then about "+r;}, soon:"Almost done", lastUpdate:function(t){return "Last update at "+t;},
       elapsed:"Elapsed", progress:"Progress", pace:"Pace", conf:"Estimate quality",
       confRough:"Rough", confFair:"Fair", confGood:"Good", paceNone:"n/a",
       paceTip:"Actual time of finished steps ÷ their estimates; above 1 means slower than planned",
@@ -299,6 +301,7 @@ h2{margin:0 0 10px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;
       s.estMin = Math.max(num(s.est, 1), 0.1);
       s.t0 = ts(s.startedAt); s.t1 = ts(s.endedAt);
       s.doneN = num(s.done, 0); s.totalN = num(s.total, 0);
+      s.pausedMs = Math.max(0, num(s.pausedSec, 0)) * 1000;
     });
     list.sort(function(a, b){ return (num(a.n, 999) - num(b.n, 999)) || String(a.id).localeCompare(String(b.id)); });
     return list;
@@ -307,6 +310,13 @@ h2{margin:0 0 10px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;
   // ETA model: Claude's per-step estimates, rescaled by a pace factor learned from finished steps.
   function compute(st, steps, now){
     var active = steps.filter(function(s){ return s.status !== "skipped"; });
+    // Time spent waiting for the user is not work: subtract finished pauses (pausedSec) and the current wait (waitingSince).
+    var wait0 = st.status === "waiting" ? ts(st.waitingSince) : null;
+    var worked = function(s){
+      if (!s.t0) return 0;
+      var w = wait0 && wait0 > s.t0 ? Math.max(0, now - wait0) : 0;
+      return Math.max(0, (now - s.t0 - s.pausedMs - w) / 60000);
+    };
     var sumE = 0, eDone = 0, aDone = 0, nDone = 0, progW = 0, remPending = 0;
     active.forEach(function(s){
       sumE += s.estMin;
@@ -314,25 +324,25 @@ h2{margin:0 0 10px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;
         progW += s.estMin;
         if (s.status === "done"){
           nDone++; eDone += s.estMin;
-          aDone += (s.t0 && s.t1 && s.t1 >= s.t0) ? (s.t1 - s.t0) / 60000 : s.estMin;
+          aDone += (s.t0 && s.t1 && s.t1 >= s.t0) ? Math.max(0, s.t1 - s.t0 - s.pausedMs) / 60000 : s.estMin;
         }
       }
     });
     // A running step is evidence too: with item counts it shows its rate, and an overrun shows at least its elapsed time.
     active.forEach(function(s){
       if (s.status !== "running" || !s.t0) return;
-      var e = Math.max(0, (now - s.t0) / 60000);
+      var e = worked(s);
       if (s.totalN > 0 && s.doneN > 0){ aDone += e; eDone += s.estMin * Math.min(s.doneN / s.totalN, 1); }
       else if (e > s.estMin){ aDone += e; eDone += s.estMin; }
     });
     var prior = active.length ? sumE / active.length : 1;
     var k = Math.min(5, Math.max(0.3, (aDone + prior) / (eDone + prior)));
-    var runRem = [], maxExpected = 0;
+    var runRem = [], maxEst = 0;
     active.forEach(function(s){
       if (s.status === "running"){
-        var e = s.t0 ? Math.max(0, (now - s.t0) / 60000) : 0;
+        var e = worked(s);
         var expected = s.estMin * k, rem;
-        maxExpected = Math.max(maxExpected, expected);
+        maxEst = Math.max(maxEst, s.estMin);
         if (s.totalN > 0 && s.doneN > 0 && s.doneN < s.totalN){
           var w = s.doneN / s.totalN, proj = w * (e * s.totalN / s.doneN) + (1 - w) * Math.max(expected, e);
           rem = Math.max(proj - e, 0);
@@ -347,7 +357,7 @@ h2{margin:0 0 10px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;
     var pct = sumE ? progW / sumE : 0;
     if (st.status === "done") pct = 1;
     var conf = nDone === 0 ? L.confRough : (nDone <= 2 && pct < 0.4 ? L.confFair : L.confGood);
-    return {k: k, nDone: nDone, paced: eDone > 0, remaining: remRun + remPending, pct: Math.min(1, Math.max(0, pct)), conf: conf, maxExpected: maxExpected};
+    return {k: k, nDone: nDone, paced: eDone > 0, remaining: remRun + remPending, pct: Math.min(1, Math.max(0, pct)), conf: conf, maxEst: maxEst};
   }
 
   function setStaticLabels(){
@@ -381,11 +391,14 @@ h2{margin:0 0 10px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;
     if (!isFinite(started)) started = null;
     var ended = ts(st.endedAt) || updated;
 
-    $("chip").className = "chip " + status; $("chip").textContent = L[status];
+    // Silence longer than 1.5x the running step's own estimate (at least 6 min) is a warning; 3x that means the task has probably stopped.
+    var since = updated ? (now - updated) / 60000 : 0, limit = Math.max(6, c.maxEst * 1.5);
+    var stale = status === "running" && updated && since > limit, stalled = stale && since > limit * 3;
+    var shown = stalled ? "stalled" : status;
+    $("chip").className = "chip " + shown; $("chip").textContent = L[shown];
     var hb = $("heartbeat"); hb.className = "heartbeat";
     if (updated){
-      var since = (now - updated) / 60000, limit = Math.max(6, c.maxExpected * 1.5);
-      if (status === "running" && since > limit){ hb.className = "heartbeat stale"; hb.textContent = L.stale(Math.round(since)); }
+      if (stale){ hb.className = "heartbeat stale"; hb.textContent = L.stale(Math.round(since)); }
       else hb.textContent = L.updated(ago(now - updated));
     } else hb.textContent = "";
     $("title").textContent = st.title || L.title;
@@ -398,6 +411,9 @@ h2{margin:0 0 10px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;
     } else if (status === "failed"){
       label = L.stopped; value = '<span class="word">' + esc(L.failed) + '</span>';
       sub = ended ? clock(ended) : "";
+    } else if (stalled){
+      label = L.stopped; value = '<span class="word">' + esc(L.stalled) + '</span>';
+      sub = L.lastUpdate(clock(updated));
     } else if (status === "waiting"){
       label = L.paused; value = '<span class="word">' + esc(L.waiting) + '</span>';
       sub = c.remaining > 0 ? L.resume(durText(c.remaining)) : "";
@@ -414,6 +430,7 @@ h2{margin:0 0 10px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;
     $("pace").textContent = c.paced ? "×" + c.k.toFixed(1) : L.paceNone;
     $("conf").textContent = status === "done" ? "—" : c.conf;
     var bar = $("bar"); bar.setAttribute("aria-valuenow", String(Math.round(c.pct * 100)));
+    bar.className = stalled || status === "waiting" ? "bar paused" : "bar";
 
     bar.innerHTML = steps.filter(function(s){ return s.status !== "skipped"; }).map(function(s){
       var f = s.status === "done" || s.status === "failed" ? 1 : s.status === "running"
@@ -424,7 +441,7 @@ h2{margin:0 0 10px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;
     $("steps").innerHTML = steps.length ? steps.map(function(s){
       var main = "", estTxt = L.est(durText(s.estMin, true));
       if (s.status === "done" || s.status === "failed"){
-        if (s.t0 && s.t1){ var act = (s.t1 - s.t0) / 60000; main = '<span class="t-main' + (act > s.estMin * 1.25 ? " over" : "") + '">' + esc(durText(act, true)) + '</span>'; }
+        if (s.t0 && s.t1){ var act = Math.max(0, s.t1 - s.t0 - s.pausedMs) / 60000; main = '<span class="t-main' + (act > s.estMin * 1.25 ? " over" : "") + '">' + esc(durText(act, true)) + '</span>'; }
       } else if (s.status === "running" && s.live){
         main = '<span class="t-main' + (s.live.over ? " over" : "") + '">' + watch(s.live.elapsed * 60000) + '</span>';
       } else if (s.status === "skipped"){ estTxt = L.skipped; }
