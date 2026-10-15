@@ -47,6 +47,7 @@ h1{margin:10px 0 0;font-size:clamp(22px,4.4vw,28px);line-height:1.25;font-weight
 .stats{display:grid;grid-template-columns:repeat(2,auto);gap:12px 28px;margin:0}
 .stats dt{font-size:12px;color:var(--muted)}
 .stats dd{margin:2px 0 0;font-family:var(--mono);font-size:16px;font-weight:500;font-variant-numeric:tabular-nums}
+.stats dd .sub{display:block;margin-top:1px;font-family:var(--sans);font-size:12px;font-weight:400;color:var(--muted)}
 .bar{grid-column:1/-1;display:flex;gap:3px;height:12px}
 .seg{flex:var(--w) 1 0;min-width:6px;background:var(--track);border-radius:3px;overflow:hidden;position:relative}
 .seg>i{position:absolute;inset:0 auto 0 0;width:var(--f);background:var(--accent)}
@@ -212,7 +213,9 @@ h2{margin:0 0 10px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;
       resume:function(r){return "回复后继续，之后约需 "+r;}, soon:"即将完成", lastUpdate:function(t){return "最后一次更新在 "+t;},
       elapsed:"已用时", progress:"完成度", pace:"节奏", conf:"估算可信度",
       confRough:"粗略", confFair:"一般", confGood:"较准", paceNone:"暂无",
-      paceTip:"已完成步骤的实际耗时 ÷ 预估耗时，大于 1 表示比预想的慢",
+      paceSlower:function(n){return ["比预估慢 "+n+"%", ""];}, paceFaster:function(n){return ["比预估快 "+n+"%", ""];},
+      paceEven:["与预估相当", "相差不到 5%"], paceTimes:function(x){return ["用时为预估的 "+x+"\u00a0倍", ""];},
+      paceTip:"已完成部分的实际用时比预估快或慢多少（做了平滑，不会因为单个步骤大起大落）。剩余步骤按同样比例调整。",
       steps:"步骤", log:"动态", result:"结果",
       showAll:function(n){return "显示全部 "+n+" 条";}, showLess:"收起",
       est:function(d){return "预估 "+d;}, skipped:"已跳过",
@@ -223,7 +226,7 @@ h2{margin:0 0 10px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;
       noRuntime:"这个页面要在 Claude 里打开，才能读取实时进度。",
       error:"实时连接中断，正在重试……",
       barNote:"每一段代表一个步骤，宽度按预估耗时分配",
-      foot:"预计剩余 = 剩余步骤的预估耗时 × 节奏；有子进度（如 3/12）时按实际速度推算。计时由页面每秒刷新，进度由 Claude 在每步前后写入。",
+      foot:"预计剩余 = 剩余步骤的预估耗时，按目前比预估快或慢的比例调整；有子进度（如 3/12）时按实际速度推算。计时由页面每秒刷新，进度由 Claude 在每步前后写入。",
       min:"分钟", minShort:"分", hr:"小时", lt1:"<1", locale:"zh-CN"
     },
     en: {
@@ -233,7 +236,9 @@ h2{margin:0 0 10px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;
       resume:function(r){return "Resumes after your reply, then about "+r;}, soon:"Almost done", lastUpdate:function(t){return "Last update at "+t;},
       elapsed:"Elapsed", progress:"Progress", pace:"Pace", conf:"Estimate quality",
       confRough:"Rough", confFair:"Fair", confGood:"Good", paceNone:"n/a",
-      paceTip:"Actual time of finished steps ÷ their estimates; above 1 means slower than planned",
+      paceSlower:function(n){return [n+"% slower", "than estimated"];}, paceFaster:function(n){return [n+"% faster", "than estimated"];},
+      paceEven:["As estimated", "within 5%"], paceTimes:function(x){return [x+"×", "the estimated time"];},
+      paceTip:"How much faster or slower than estimated the work has been so far, smoothed so one step can't swing it. Remaining steps are adjusted by the same amount.",
       steps:"Steps", log:"Activity", result:"Result",
       showAll:function(n){return "Show all "+n;}, showLess:"Show less",
       est:function(d){return "est. "+d;}, skipped:"Skipped",
@@ -244,7 +249,7 @@ h2{margin:0 0 10px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;
       noRuntime:"Open this page in Claude to see live progress.",
       error:"Live connection lost, retrying…",
       barNote:"Each segment is one step, sized by its estimated time",
-      foot:"Time left = remaining estimates × pace; steps with item counts (e.g. 3/12) use their measured rate. Timers tick every second; Claude writes progress before and after each step.",
+      foot:"Time left = remaining estimates, adjusted by how much faster or slower than estimated the work has been; steps with item counts (e.g. 3/12) use their measured rate. Timers tick every second; Claude writes progress before and after each step.",
       min:"min", minShort:"min", hr:"h", lt1:"<1", locale:"en-US"
     }
   };
@@ -379,6 +384,17 @@ h2{margin:0 0 10px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;
     $("summarySec").hidden = true; $("logSec").hidden = true;
   }
 
+  // Pace as "n% slower/faster than estimated", in steps of 5% so it doesn't flicker every second;
+  // from twice the estimate up, as a multiple ("2.3× the estimated time"), which reads better than "130% slower".
+  function paceHTML(c){
+    if (!c.paced) return esc(L.paceNone);
+    var raw = (c.k - 1) * 100, p;
+    if (Math.abs(raw) < 5) p = L.paceEven;
+    else if (c.k >= 2) p = L.paceTimes(c.k.toFixed(1));
+    else { var n = Math.max(5, Math.round(Math.abs(raw) / 5) * 5); p = raw > 0 ? L.paceSlower(n) : L.paceFaster(n); }
+    return esc(p[0]) + (p[1] ? '<span class="sub">' + esc(p[1]) + "</span>" : "");
+  }
+
   function render(){
     lang = pickLang(state); L = I18N[lang]; setStaticLabels();
     if (!state){ renderEmpty(); return; }
@@ -427,7 +443,7 @@ h2{margin:0 0 10px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;
     var endRef = (status === "running" || status === "waiting") ? now : ended;
     $("elapsed").textContent = started && endRef ? watch(endRef - started) : "—";
     $("pct").textContent = Math.round(c.pct * 100) + "%";
-    $("pace").textContent = c.paced ? "×" + c.k.toFixed(1) : L.paceNone;
+    $("pace").innerHTML = paceHTML(c);
     $("conf").textContent = status === "done" ? "—" : c.conf;
     var bar = $("bar"); bar.setAttribute("aria-valuenow", String(Math.round(c.pct * 100)));
     bar.className = stalled || status === "waiting" ? "bar paused" : "bar";
