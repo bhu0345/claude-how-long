@@ -1,10 +1,14 @@
-# Live Progress：给 Claude 长任务加上进度条和预计完成时间
+<p align="center"><img src="docs/logo.svg" width="112" alt="how-long logo"></p>
 
-[English](README.md) | **简体中文**
+<h1 align="center">how-long</h1>
 
-![Claude Agent Skill](https://img.shields.io/badge/Claude-Agent%20Skill-2E56D9) ![Version 1.1.1](https://img.shields.io/badge/version-1.1.1-2E56D9) ![License: MIT](https://img.shields.io/badge/license-MIT-1D8757) ![No dependencies](https://img.shields.io/badge/dependencies-none-5E6A7F)
+<p align="center"><b>给 Claude 的长任务加上实时进度条和预计完成时间。</b><br>别再问 Claude 还要多久，打开看就行。</p>
 
-Claude 做长任务时（调研、批量处理文件、写多章节报告），你通常看不出它做到哪了、还要多久。**live-progress** 是一个 [Agent Skill](https://github.com/anthropics/skills)，用来解决这个问题。长任务一开始，Claude 会发布一个实时进度页（artifact），你随时点开就能看到：
+<p align="center"><a href="README.md">English</a> | <b>简体中文</b></p>
+
+<p align="center"><img src="https://img.shields.io/badge/Claude-Agent%20Skill-2E56D9" alt="Claude Agent Skill"> <img src="https://img.shields.io/badge/version-1.2.0-2E56D9" alt="Version 1.2.0"> <img src="https://img.shields.io/badge/license-MIT-1D8757" alt="License: MIT"> <img src="https://img.shields.io/badge/dependencies-none-5E6A7F" alt="No dependencies"></p>
+
+Claude 做长任务时（调研、批量处理文件、写多章节报告），你通常看不出它做到哪了、还要多久。**how-long**（原名 *live-progress*）是一个 [Agent Skill](https://github.com/anthropics/skills)，用来解决这个问题。长任务一开始，Claude 会发布一个实时进度页（artifact），你随时点开就能看到：
 
 - Claude 现在在做什么
 - 每一步的状态和用时
@@ -12,7 +16,7 @@ Claude 做长任务时（调研、批量处理文件、写多章节报告），�
 - 已用时、**预计剩余时间和预计几点完成**
 - 关键节点的动态记录
 
-**[▶ 在线演示](https://bhu0345.github.io/claude-live-progress-skill/)**（模拟数据，每隔几秒自动推进）
+**[▶ 在线演示](https://bhu0345.github.io/claude-how-long/)**（模拟数据，每隔几秒自动推进）
 
 <p>
   <img src="docs/screenshot-light.png" alt="进度页，浅色主题" width="62%">
@@ -50,18 +54,18 @@ Claude ──ArtifactData.update──▶ artifact 数据库 (run/state) ──�
 
 ### Claude 应用（网页版 / 桌面版）
 
-1. 下载 [`dist/live-progress.zip`](dist/live-progress.zip)（或[最新 release](https://github.com/bhu0345/claude-live-progress-skill/releases/latest) 里附带的 zip）。
-2. 打开 **Customize → Skills → Add**，上传这个 zip。需要先开启代码执行。装过 1.0 版的，用这个版本替换掉。
-3. 开始一个长任务即可。也可以直接说："用 live-progress 显示进度"。
+1. 下载 [`dist/how-long.zip`](dist/how-long.zip)（或[最新 release](https://github.com/bhu0345/claude-how-long/releases/latest) 里附带的 zip）。
+2. 打开 **Customize → Skills → Add**，上传这个 zip。需要先开启代码执行。装过旧名字 *live-progress* 的，请先删掉它：名字变了，不删的话两个会同时生效。
+3. 开始一个长任务即可。也可以直接说："用 how-long 显示进度"。
 
 ### Claude Code
 
 ```bash
-git clone https://github.com/bhu0345/claude-live-progress-skill
-cp -r claude-live-progress-skill/live-progress ~/.claude/skills/
+git clone https://github.com/bhu0345/claude-how-long
+cp -r claude-how-long/how-long ~/.claude/skills/
 ```
 
-要复制整个 `live-progress` 文件夹：页面模板是 `SKILL.md` 旁边的单独文件。
+要复制整个 `how-long` 文件夹：页面模板是 `SKILL.md` 旁边的单独文件。装过旧版的，把 `~/.claude/skills/live-progress` 删掉。
 
 ## 在哪些环境能用
 
@@ -74,7 +78,7 @@ cp -r claude-live-progress-skill/live-progress ~/.claude/skills/
 | Claude 桌面版 | 尚未验证 |
 | 终端里的 Claude Code | 没有 artifact，按设计改用任务列表；尚未验证 |
 
-在其他环境用过？欢迎[提 issue](https://github.com/bhu0345/claude-live-progress-skill/issues) 说说你看到的情况。
+在其他环境用过？欢迎[提 issue](https://github.com/bhu0345/claude-how-long/issues) 说说你看到的情况。
 
 ## 怎么确认它在工作
 
@@ -99,10 +103,10 @@ Claude 开始长任务后不久，对话里会出现一张"××进度"的卡片�
 
 | 路径 | 说明 |
 |---|---|
-| [`live-progress/SKILL.md`](live-progress/SKILL.md) | Claude 照着执行的说明：什么时候用、数据协议、更新节奏、怎么恢复（约 9 KB） |
-| [`live-progress/template.html`](live-progress/template.html) | 进度页本身，Claude 每个任务复制一份 |
-| [`dist/live-progress.zip`](dist/live-progress.zip) | 上面两个文件，打包好用于上传到 Claude 应用 |
-| [`docs/`](docs/) | 可以独立打开的演示页，用模拟数据代替 Claude 运行时（部署在 GitHub Pages） |
+| [`how-long/SKILL.md`](how-long/SKILL.md) | Claude 照着执行的说明：什么时候用、数据协议、更新节奏、怎么恢复（约 9 KB） |
+| [`how-long/template.html`](how-long/template.html) | 进度页本身，Claude 每个任务复制一份 |
+| [`dist/how-long.zip`](dist/how-long.zip) | 上面两个文件，打包好用于上传到 Claude 应用 |
+| [`docs/`](docs/) | 可以独立打开的演示页，用模拟数据代替 Claude 运行时（部署在 GitHub Pages），以及 logo |
 | [`CHANGELOG.md`](CHANGELOG.md) | 每个版本的改动 |
 
 ## 数据格式
@@ -125,7 +129,7 @@ Claude 开始长任务后不久，对话里会出现一张"××进度"的卡片�
 }
 ```
 
-`status` 可取 `running`、`waiting`（等你回复，`waitingSince` 记录开始等待的时间）、`done`、`failed`。每一步的状态可取 `pending`、`running`、`done`、`failed`、`skipped`，`pausedSec` 记录这一步里要扣除的等待时间。时间戳用 Unix 秒，页面也接受毫秒和 ISO 字符串。完整字段说明见 [`SKILL.md`](live-progress/SKILL.md)。
+`status` 可取 `running`、`waiting`（等你回复，`waitingSince` 记录开始等待的时间）、`done`、`failed`。每一步的状态可取 `pending`、`running`、`done`、`failed`、`skipped`，`pausedSec` 记录这一步里要扣除的等待时间。时间戳用 Unix 秒，页面也接受毫秒和 ISO 字符串。完整字段说明见 [`SKILL.md`](how-long/SKILL.md)。
 
 ## 代价和局限
 

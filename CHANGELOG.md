@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.2.0 — 2026-10
+
+- Renamed from *live-progress* to **how-long**: the skill, its folder and the zip (`dist/how-long.zip`). If you installed the old name, delete it before installing this one.
+- The repository moved to `bhu0345/claude-how-long`; the old address redirects. The demo is now at https://bhu0345.github.io/claude-how-long/.
+- New logo (`docs/logo.svg`).
+- No change to how the skill or the page works.
+
 ## 1.1.1 — 2026-10
 
 - The page shows pace in words instead of "×1.2": "20% slower than estimated" / "比预估慢 20%", or "2.5× the estimated time" / "用时为预估的 2.5 倍" once work takes twice as long or more. Percentages move in steps of 5%, and within 5% of the estimate it says "As estimated" / "与预估相当".

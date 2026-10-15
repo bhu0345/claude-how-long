@@ -1,10 +1,14 @@
-# Live Progress: a progress bar and ETA for Claude's long tasks
+<p align="center"><img src="docs/logo.svg" width="112" alt="how-long logo"></p>
 
-**English** | [简体中文](README.zh-CN.md)
+<h1 align="center">how-long</h1>
 
-![Claude Agent Skill](https://img.shields.io/badge/Claude-Agent%20Skill-2E56D9) ![Version 1.1.1](https://img.shields.io/badge/version-1.1.1-2E56D9) ![License: MIT](https://img.shields.io/badge/license-MIT-1D8757) ![No dependencies](https://img.shields.io/badge/dependencies-none-5E6A7F)
+<p align="center"><b>A live progress bar and ETA for Claude's long tasks.</b><br>Stop asking Claude how long. Watch it.</p>
 
-When Claude works on a long task (research, batch file processing, a multi-section report), you usually can't tell how far along it is or how long it will take. **live-progress** is an [Agent Skill](https://github.com/anthropics/skills) that fixes that. At the start of a long task, Claude publishes a live progress page as an artifact. You can open it at any time to see:
+<p align="center"><b>English</b> | <a href="README.zh-CN.md">简体中文</a></p>
+
+<p align="center"><img src="https://img.shields.io/badge/Claude-Agent%20Skill-2E56D9" alt="Claude Agent Skill"> <img src="https://img.shields.io/badge/version-1.2.0-2E56D9" alt="Version 1.2.0"> <img src="https://img.shields.io/badge/license-MIT-1D8757" alt="License: MIT"> <img src="https://img.shields.io/badge/dependencies-none-5E6A7F" alt="No dependencies"></p>
+
+When Claude works on a long task (research, batch file processing, a multi-section report), you usually can't tell how far along it is or how long it will take. **how-long** (formerly *live-progress*) is an [Agent Skill](https://github.com/anthropics/skills) that fixes that. At the start of a long task, Claude publishes a live progress page as an artifact. You can open it at any time to see:
 
 - what Claude is doing right now
 - every step, with its status and time taken
@@ -12,11 +16,11 @@ When Claude works on a long task (research, batch file processing, a multi-secti
 - time elapsed, **time left, and the expected finish time**
 - a short activity log
 
-**[▶ Try the live demo](https://bhu0345.github.io/claude-live-progress-skill/en/)** (simulated data, updates every few seconds)
+**[▶ Try the live demo](https://bhu0345.github.io/claude-how-long/en/)** (simulated data, updates every few seconds)
 
 <p>
-  <img src="docs/screenshot-light-en.png" alt="Live Progress page, light theme" width="62%">
-  <img src="docs/screenshot-dark-mobile-en.png" alt="Live Progress page, dark theme on a phone" width="28%">
+  <img src="docs/screenshot-light-en.png" alt="how-long progress page, light theme" width="62%">
+  <img src="docs/screenshot-dark-mobile-en.png" alt="how-long progress page, dark theme on a phone" width="28%">
 </p>
 
 ## When Claude uses it
@@ -50,18 +54,18 @@ Claude ──ArtifactData.update──▶ artifact database (run/state) ──li
 
 ### Claude app (claude.ai / desktop)
 
-1. Download [`dist/live-progress.zip`](dist/live-progress.zip) (or the zip attached to the [latest release](https://github.com/bhu0345/claude-live-progress-skill/releases/latest)).
-2. Go to **Customize → Skills → Add** and upload the zip. Code execution must be enabled. If you installed version 1.0, replace it with this one.
-3. Start any long task. You can also ask for it directly: *"use live-progress to show progress"*.
+1. Download [`dist/how-long.zip`](dist/how-long.zip) (or the zip attached to the [latest release](https://github.com/bhu0345/claude-how-long/releases/latest)).
+2. Go to **Customize → Skills → Add** and upload the zip. Code execution must be enabled. If you installed it under its old name, *live-progress*, delete that one: the new name means both would load.
+3. Start any long task. You can also ask for it directly: *"use how-long to show progress"*.
 
 ### Claude Code
 
 ```bash
-git clone https://github.com/bhu0345/claude-live-progress-skill
-cp -r claude-live-progress-skill/live-progress ~/.claude/skills/
+git clone https://github.com/bhu0345/claude-how-long
+cp -r claude-how-long/how-long ~/.claude/skills/
 ```
 
-Copy the whole `live-progress` folder: the page template is a separate file next to `SKILL.md`.
+Copy the whole `how-long` folder: the page template is a separate file next to `SKILL.md`. If you have `~/.claude/skills/live-progress` from an older version, remove it.
 
 ## Where it works
 
@@ -74,7 +78,7 @@ The page needs artifacts with a database (`ArtifactData`). Where that's missing,
 | Claude desktop app | Not verified yet |
 | Claude Code in a terminal | No artifacts: falls back to the task list by design; not verified yet |
 
-Tried it somewhere else? Please [open an issue](https://github.com/bhu0345/claude-live-progress-skill/issues) with what you saw.
+Tried it somewhere else? Please [open an issue](https://github.com/bhu0345/claude-how-long/issues) with what you saw.
 
 ## Is it working?
 
@@ -99,10 +103,10 @@ Soon after Claude starts a long task, a card titled "… progress" appears in th
 
 | Path | What it is |
 |---|---|
-| [`live-progress/SKILL.md`](live-progress/SKILL.md) | The instructions Claude follows: when to use the page, the data protocol, how often to update, how to recover (about 9 KB) |
-| [`live-progress/template.html`](live-progress/template.html) | The progress page itself; Claude copies it for each task |
-| [`dist/live-progress.zip`](dist/live-progress.zip) | Both files, packaged for upload to the Claude app |
-| [`docs/`](docs/) | Standalone demo pages with a fake runtime, served on GitHub Pages |
+| [`how-long/SKILL.md`](how-long/SKILL.md) | The instructions Claude follows: when to use the page, the data protocol, how often to update, how to recover (about 9 KB) |
+| [`how-long/template.html`](how-long/template.html) | The progress page itself; Claude copies it for each task |
+| [`dist/how-long.zip`](dist/how-long.zip) | Both files, packaged for upload to the Claude app |
+| [`docs/`](docs/) | Standalone demo pages with a fake runtime, served on GitHub Pages, and the logo |
 | [`CHANGELOG.md`](CHANGELOG.md) | What changed in each version |
 
 ## Data format
@@ -125,7 +129,7 @@ One document at `run/state`:
 }
 ```
 
-`status` is one of `running`, `waiting` (Claude is waiting for your reply; `waitingSince` marks when), `done` or `failed`. Each step is `pending`, `running`, `done`, `failed` or `skipped`, and `pausedSec` records waiting time to leave out of its duration. Timestamps are Unix seconds; the page also accepts milliseconds and ISO strings. The full reference is in [`SKILL.md`](live-progress/SKILL.md).
+`status` is one of `running`, `waiting` (Claude is waiting for your reply; `waitingSince` marks when), `done` or `failed`. Each step is `pending`, `running`, `done`, `failed` or `skipped`, and `pausedSec` records waiting time to leave out of its duration. Timestamps are Unix seconds; the page also accepts milliseconds and ISO strings. The full reference is in [`SKILL.md`](how-long/SKILL.md).
 
 ## Cost and trade-offs
 
