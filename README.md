@@ -2,7 +2,7 @@
 
 **English** | [简体中文](README.zh-CN.md)
 
-![Claude Agent Skill](https://img.shields.io/badge/Claude-Agent%20Skill-2E56D9) ![Version 1.1.0](https://img.shields.io/badge/version-1.1.0-2E56D9) ![License: MIT](https://img.shields.io/badge/license-MIT-1D8757) ![No dependencies](https://img.shields.io/badge/dependencies-none-5E6A7F)
+![Claude Agent Skill](https://img.shields.io/badge/Claude-Agent%20Skill-2E56D9) ![Version 1.1.1](https://img.shields.io/badge/version-1.1.1-2E56D9) ![License: MIT](https://img.shields.io/badge/license-MIT-1D8757) ![No dependencies](https://img.shields.io/badge/dependencies-none-5E6A7F)
 
 When Claude works on a long task (research, batch file processing, a multi-section report), you usually can't tell how far along it is or how long it will take. **live-progress** is an [Agent Skill](https://github.com/anthropics/skills) that fixes that. At the start of a long task, Claude publishes a live progress page as an artifact. You can open it at any time to see:
 
@@ -40,7 +40,7 @@ Claude ──ArtifactData.update──▶ artifact database (run/state) ──li
 ### How the ETA is estimated
 
 1. Claude gives every step an estimate in minutes (`est`) when it plans the task.
-2. The page learns a **pace** factor from real timings: actual time of finished steps ÷ their estimates. It also counts evidence from the running step, and uses a prior so one early outlier doesn't make the ETA swing.
+2. The page learns a **pace** from real timings: actual time of finished steps compared with their estimates, shown as, for example, "20% slower than estimated", or "2.5× the estimated time" once it takes twice as long or more. It also counts evidence from the running step, and uses a prior so one early outlier doesn't make the ETA swing.
 3. Time left = what remains of the running step + remaining estimates × pace.
 4. If a step processes many items (for example 7 / 12 files), its remaining time comes from the measured rate per item.
 5. Time spent waiting for your reply doesn't count as work, so it doesn't stretch the estimate.
@@ -130,7 +130,7 @@ One document at `run/state`:
 ## Cost and trade-offs
 
 - Each checkpoint costs Claude one or two extra tool calls, so the skill is meant for tasks of about 10 minutes or more.
-- Loading the skill adds about 9 KB of instructions, down from 35 KB in v1.0. The 26 KB page template is a separate file, used only when Claude publishes a page.
+- Loading the skill adds about 9 KB of instructions, down from 35 KB in v1.0. The 27 KB page template is a separate file, used only when Claude publishes a page.
 - Before any step finishes, the ETA rests only on Claude's own estimates, and the page labels it *Rough*. It gets better once real timings arrive.
 
 ## Contributing

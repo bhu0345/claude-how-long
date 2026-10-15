@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.1.1 — 2026-10
+
+- The page shows pace in words instead of "×1.2": "20% slower than estimated" / "比预估慢 20%", or "2.5× the estimated time" / "用时为预估的 2.5 倍" once work takes twice as long or more. Percentages move in steps of 5%, and within 5% of the estimate it says "As estimated" / "与预估相当".
+- Only `template.html` changed: reinstall from the new zip.
+
 ## 1.1.0 — 2026-10
 
 Reliability

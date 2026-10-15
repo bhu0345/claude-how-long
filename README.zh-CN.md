@@ -2,7 +2,7 @@
 
 [English](README.md) | **简体中文**
 
-![Claude Agent Skill](https://img.shields.io/badge/Claude-Agent%20Skill-2E56D9) ![Version 1.1.0](https://img.shields.io/badge/version-1.1.0-2E56D9) ![License: MIT](https://img.shields.io/badge/license-MIT-1D8757) ![No dependencies](https://img.shields.io/badge/dependencies-none-5E6A7F)
+![Claude Agent Skill](https://img.shields.io/badge/Claude-Agent%20Skill-2E56D9) ![Version 1.1.1](https://img.shields.io/badge/version-1.1.1-2E56D9) ![License: MIT](https://img.shields.io/badge/license-MIT-1D8757) ![No dependencies](https://img.shields.io/badge/dependencies-none-5E6A7F)
 
 Claude 做长任务时（调研、批量处理文件、写多章节报告），你通常看不出它做到哪了、还要多久。**live-progress** 是一个 [Agent Skill](https://github.com/anthropics/skills)，用来解决这个问题。长任务一开始，Claude 会发布一个实时进度页（artifact），你随时点开就能看到：
 
@@ -40,7 +40,7 @@ Claude ──ArtifactData.update──▶ artifact 数据库 (run/state) ──�
 ### 预计时间怎么算
 
 1. Claude 规划任务时，给每一步写一个预估分钟数（`est`）。
-2. 页面用实际耗时学出一个**节奏**系数：已完成步骤的实际耗时 ÷ 预估耗时。进行中的步骤也算作证据，另外加了先验，所以前面某一步偏差很大时，预计时间不会大起大落。
+2. 页面用实际耗时算出**节奏**：已完成步骤的实际耗时和预估相比快多少或慢多少，显示为"比预估慢 20%"这样的说法，慢到一倍以上时显示"用时为预估的 2.5 倍"。进行中的步骤也算作证据，另外加了先验，所以前面某一步偏差很大时，预计时间不会大起大落。
 3. 预计剩余 = 进行中步骤还剩的时间 + 剩余步骤的预估 × 节奏。
 4. 某一步要处理很多项目时（比如 7 / 12 个文件），按每一项的实际处理速度推算这一步还要多久。
 5. 等你回复的时间不算作工作时间，不会把预计时间拉长。
@@ -130,7 +130,7 @@ Claude 开始长任务后不久，对话里会出现一张"××进度"的卡片�
 ## 代价和局限
 
 - 每个检查点要多 1 到 2 次工具调用，所以只建议用在 10 分钟左右或更久的任务上。
-- 加载这个 skill 只增加约 9 KB 的说明，1.0 版是 35 KB。26 KB 的页面模板是单独的文件，只在 Claude 发布页面时用到。
+- 加载这个 skill 只增加约 9 KB 的说明，1.0 版是 35 KB。27 KB 的页面模板是单独的文件，只在 Claude 发布页面时用到。
 - 还没有步骤完成时，预计时间只能依据 Claude 自己的估算，页面会标为"粗略"。有了实际耗时后会越来越准。
 
 ## 参与贡献
